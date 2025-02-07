@@ -64,13 +64,7 @@ export default function Game() {
         variant: "destructive",
       });
 
-      // Just move to next word without showing answer
-      const nextWord = getRandomWord(gameState.level);
-      setGameState((prev) => ({
-        ...prev,
-        currentWord: nextWord,
-        scrambledWord: scrambleWord(nextWord),
-      }));
+      // Just clear their input and let them try again
       setInput("");
     }
   }, [input, gameState, handleNextWord]);
