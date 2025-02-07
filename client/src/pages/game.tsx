@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Timer } from "@/components/game/timer";
 import { ScoreDisplay } from "@/components/game/score-display";
 import { Leaderboard } from "@/components/game/leaderboard";
-import { Trophy } from "lucide-react";
+import { Trophy, LogIn, LogOut } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { initializeGame, checkWord, calculateScore, INITIAL_TIME, type GameState } from "@/lib/game";
@@ -21,7 +21,7 @@ export default function Game() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [revealedWord, setRevealedWord] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -86,9 +86,9 @@ export default function Game() {
         title: "Game Over!",
         description: "Log in or create an account to save your score!",
         action: (
-          <Button 
-            variant="default" 
-            size="sm" 
+          <Button
+            variant="default"
+            size="sm"
             onClick={() => setLocation("/auth")}
           >
             Login / Sign Up
@@ -135,14 +135,38 @@ export default function Game() {
       >
         <div className="flex justify-between items-center">
           <ScoreDisplay score={gameState.score} level={gameState.level} />
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setShowLeaderboard(true)}
-            className="ml-2"
-          >
-            <Trophy className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            {user ? (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => logoutMutation.mutate()}
+                className="relative group"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="sr-only">Logout</span>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setLocation("/auth")}
+                className="relative group"
+              >
+                <LogIn className="h-4 w-4" />
+                <span className="sr-only">Login</span>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setShowLeaderboard(true)}
+              className="relative group"
+            >
+              <Trophy className="h-4 w-4" />
+              <span className="sr-only">Leaderboard</span>
+            </Button>
+          </div>
         </div>
 
         <Timer
