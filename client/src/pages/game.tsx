@@ -27,35 +27,55 @@ export default function Game() {
     return () => clearInterval(timer);
   }, []);
 
+  const handleNextWord = useCallback(() => {
+    const nextLevel = gameState.level + 1;
+    const nextWord = getRandomWord(nextLevel);
+
+    setGameState((prev) => ({
+      ...prev,
+      level: nextLevel,
+      currentWord: nextWord,
+      scrambledWord: scrambleWord(nextWord),
+      timeLeft: Math.min(prev.timeLeft + 10, INITIAL_TIME),
+    }));
+
+    setInput("");
+  }, [gameState.level]);
 
   const handleSubmit = useCallback(async () => {
     if (checkWord(input, gameState.currentWord)) {
-      const nextLevel = gameState.level + 1;
       const additionalScore = calculateScore(gameState.timeLeft, gameState.level);
-      const nextWord = getRandomWord(nextLevel);
 
       setGameState((prev) => ({
         ...prev,
-        level: nextLevel,
         score: prev.score + additionalScore,
-        currentWord: nextWord,
-        scrambledWord: scrambleWord(nextWord),
-        timeLeft: Math.min(prev.timeLeft + 10, INITIAL_TIME),
       }));
 
-      setInput("");
       toast({
         title: "Correct!",
-        description: `+${additionalScore} points! Next level: ${nextLevel}`,
+        description: `+${additionalScore} points! Moving to next level...`,
       });
+
+      handleNextWord();
     } else {
       toast({
         title: "Incorrect",
-        description: "Try again!",
+        description: `The correct word was: ${gameState.currentWord}`,
         variant: "destructive",
       });
+
+      // Move to next word after showing the answer
+      setTimeout(() => {
+        const nextWord = getRandomWord(gameState.level);
+        setGameState((prev) => ({
+          ...prev,
+          currentWord: nextWord,
+          scrambledWord: scrambleWord(nextWord),
+        }));
+        setInput("");
+      }, 2000);
     }
-  }, [input, gameState]);
+  }, [input, gameState, handleNextWord]);
 
   const handleGameOver = useCallback(async () => {
     setGameState((prev) => ({ ...prev, isComplete: true }));
@@ -82,9 +102,13 @@ export default function Game() {
   }, [gameState.score, gameState.level, queryClient]);
 
   return (
-    <div className="min-h-screen w-full p-4 flex flex-col gap-4 items-center justify-center bg-background">
+    <div className="min-h-screen w-full p-4 relative overflow-hidden">
+      {/* Animated background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 opacity-20 animate-gradient" />
+      <div className="absolute inset-0 bg-grid-white/10" />
+
       <motion.div
-        className="w-full max-w-md space-y-4"
+        className="relative w-full max-w-md mx-auto space-y-4 mt-8"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
@@ -95,11 +119,13 @@ export default function Game() {
           onTimeUp={handleGameOver}
         />
 
-        <Card className="w-full">
+        <Card className="w-full backdrop-blur-sm bg-white/90">
           <CardContent className="p-4 space-y-4">
             <div className="text-center">
               <p className="text-sm text-muted-foreground mb-2">Unscramble this word:</p>
-              <h2 className="text-4xl font-bold tracking-wider">{gameState.scrambledWord}</h2>
+              <h2 className="text-4xl font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
+                {gameState.scrambledWord}
+              </h2>
             </div>
 
             <div className="space-y-2">
@@ -117,7 +143,7 @@ export default function Game() {
               />
               <Button 
                 onClick={handleSubmit}
-                className="w-full"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               >
                 Submit
               </Button>
@@ -127,7 +153,7 @@ export default function Game() {
 
         {gameState.isComplete && (
           <Button 
-            className="w-full" 
+            className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700" 
             onClick={() => {
               setGameState(initializeGame());
               setInput("");
