@@ -84,16 +84,7 @@ export default function Game() {
     if (!user) {
       toast({
         title: "Game Over!",
-        description: `Amazing score: ${gameState.score}! Login or create an account to save it on the leaderboard!`,
-        action: (
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => setLocation("/auth")}
-          >
-            Save Score & Login
-          </Button>
-        ),
+        description: `Amazing score: ${gameState.score}! Create an account to save your scores and compete on the leaderboard!`,
       });
       return;
     }
@@ -212,16 +203,40 @@ export default function Game() {
         </Card>
 
         {gameState.isComplete && (
-          <Button
-            className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
-            onClick={() => {
-              setGameState(initializeGame());
-              setInput("");
-              setRevealedWord(null);
-            }}
-          >
-            Play Again
-          </Button>
+          <div className="space-y-4">
+            {user ? (
+              <Button
+                className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
+                onClick={() => {
+                  setGameState(initializeGame());
+                  setInput("");
+                  setRevealedWord(null);
+                }}
+              >
+                Play Again
+              </Button>
+            ) : (
+              <>
+                <Button
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  onClick={() => setLocation("/auth")}
+                >
+                  Save Score & Create Account
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => {
+                    setGameState(initializeGame());
+                    setInput("");
+                    setRevealedWord(null);
+                  }}
+                >
+                  Play Again Without Saving
+                </Button>
+              </>
+            )}
+          </div>
         )}
       </motion.div>
     </div>

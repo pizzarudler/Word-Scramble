@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema, type InsertUser } from "@shared/schema";
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false); // Default to registration
   const [, setLocation] = useLocation();
   const { loginMutation, registerMutation, user } = useAuth();
 
