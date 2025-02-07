@@ -38,7 +38,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
               <div className="flex items-center gap-3">
                 <span className="text-lg font-bold">{index + 1}.</span>
                 <div>
-                  <p className="font-medium">{score.playerName}</p>
+                  <p className="font-medium">{score.username}</p>
                   <p className="text-sm text-muted-foreground">Level {score.level}</p>
                 </div>
               </div>

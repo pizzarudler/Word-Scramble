@@ -12,6 +12,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { initializeGame, checkWord, calculateScore, INITIAL_TIME, type GameState } from "@/lib/game";
 import { getRandomWord, scrambleWord } from "@/lib/words";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 export default function Game() {
   const [gameState, setGameState] = useState<GameState>(initializeGame());
@@ -19,6 +21,8 @@ export default function Game() {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [revealedWord, setRevealedWord] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -40,7 +44,7 @@ export default function Game() {
       level: nextLevel,
       currentWord: nextWord,
       scrambledWord: scrambleWord(nextWord),
-      timeLeft: Math.min(prev.timeLeft + 10, INITIAL_TIME),
+      timeLeft: INITIAL_TIME, // Reset timer to full when they get it right
     }));
 
     setInput("");
@@ -69,19 +73,33 @@ export default function Game() {
         variant: "destructive",
       });
 
-      // Just clear their input and let them try again
       setInput("");
     }
   }, [input, gameState, handleNextWord]);
 
   const handleGameOver = useCallback(async () => {
-    // Show the correct word in place
     setRevealedWord(gameState.currentWord);
     setGameState((prev) => ({ ...prev, isComplete: true }));
 
+    if (!user) {
+      toast({
+        title: "Game Over!",
+        description: "Log in or create an account to save your score!",
+        action: (
+          <Button 
+            variant="default" 
+            size="sm" 
+            onClick={() => setLocation("/auth")}
+          >
+            Login / Sign Up
+          </Button>
+        ),
+      });
+      return;
+    }
+
     try {
       await apiRequest("POST", "/api/scores", {
-        playerName: "Player",
         score: gameState.score,
         level: gameState.level,
       });
@@ -98,7 +116,7 @@ export default function Game() {
         variant: "destructive",
       });
     }
-  }, [gameState.score, gameState.level, gameState.currentWord, queryClient]);
+  }, [gameState.score, gameState.level, gameState.currentWord, queryClient, user, setLocation]);
 
   if (showLeaderboard) {
     return <Leaderboard onBack={() => setShowLeaderboard(false)} />;

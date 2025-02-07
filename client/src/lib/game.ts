@@ -9,7 +9,7 @@ export type GameState = {
   isComplete: boolean;
 };
 
-export const INITIAL_TIME = 60;
+export const INITIAL_TIME = 30; // Changed from 60 to 30 seconds
 export const POINTS_PER_WORD = 100;
 export const TIME_BONUS = 10;
 
