@@ -60,24 +60,29 @@ export default function Game() {
     } else {
       toast({
         title: "Incorrect",
-        description: `The correct word was: ${gameState.currentWord}`,
+        description: "Try again!",
         variant: "destructive",
       });
 
-      // Move to next word after showing the answer
-      setTimeout(() => {
-        const nextWord = getRandomWord(gameState.level);
-        setGameState((prev) => ({
-          ...prev,
-          currentWord: nextWord,
-          scrambledWord: scrambleWord(nextWord),
-        }));
-        setInput("");
-      }, 2000);
+      // Just move to next word without showing answer
+      const nextWord = getRandomWord(gameState.level);
+      setGameState((prev) => ({
+        ...prev,
+        currentWord: nextWord,
+        scrambledWord: scrambleWord(nextWord),
+      }));
+      setInput("");
     }
   }, [input, gameState, handleNextWord]);
 
   const handleGameOver = useCallback(async () => {
+    // Show the correct answer when time runs out
+    toast({
+      title: "Time's Up!",
+      description: `The word was: ${gameState.currentWord}`,
+      variant: "destructive",
+    });
+
     setGameState((prev) => ({ ...prev, isComplete: true }));
 
     try {
@@ -99,7 +104,7 @@ export default function Game() {
         variant: "destructive",
       });
     }
-  }, [gameState.score, gameState.level, queryClient]);
+  }, [gameState.score, gameState.level, gameState.currentWord, queryClient]);
 
   return (
     <div className="min-h-screen w-full p-4 relative overflow-hidden">
@@ -113,8 +118,8 @@ export default function Game() {
         animate={{ opacity: 1, y: 0 }}
       >
         <ScoreDisplay score={gameState.score} level={gameState.level} />
-        <Timer 
-          timeLeft={gameState.timeLeft} 
+        <Timer
+          timeLeft={gameState.timeLeft}
           maxTime={INITIAL_TIME}
           onTimeUp={handleGameOver}
         />
@@ -141,7 +146,7 @@ export default function Game() {
                 }}
                 className="text-center text-xl"
               />
-              <Button 
+              <Button
                 onClick={handleSubmit}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               >
@@ -152,8 +157,8 @@ export default function Game() {
         </Card>
 
         {gameState.isComplete && (
-          <Button 
-            className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700" 
+          <Button
+            className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700"
             onClick={() => {
               setGameState(initializeGame());
               setInput("");
