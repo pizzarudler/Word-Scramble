@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Timer } from "@/components/game/timer";
-import { WordDisplay } from "@/components/game/word-display";
 import { ScoreDisplay } from "@/components/game/score-display";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,6 @@ import { apiRequest } from "@/lib/queryClient";
 export default function Game() {
   const [gameState, setGameState] = useState<GameState>(initializeGame());
   const [input, setInput] = useState<string>("");
-  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -28,22 +27,6 @@ export default function Game() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleLetterClick = useCallback((index: number) => {
-    setSelectedIndices((prev) => {
-      if (prev.includes(index)) {
-        return prev.filter((i) => i !== index);
-      }
-      return [...prev, index];
-    });
-
-    setInput((prev) => {
-      const letter = gameState.scrambledWord[index];
-      if (prev.includes(letter)) {
-        return prev.replace(letter, '');
-      }
-      return prev + letter;
-    });
-  }, [gameState.scrambledWord]);
 
   const handleSubmit = useCallback(async () => {
     if (checkWord(input, gameState.currentWord)) {
@@ -61,7 +44,6 @@ export default function Game() {
       }));
 
       setInput("");
-      setSelectedIndices([]);
       toast({
         title: "Correct!",
         description: `+${additionalScore} points! Next level: ${nextLevel}`,
@@ -77,16 +59,16 @@ export default function Game() {
 
   const handleGameOver = useCallback(async () => {
     setGameState((prev) => ({ ...prev, isComplete: true }));
-    
+
     try {
       await apiRequest("POST", "/api/scores", {
         playerName: "Player",
         score: gameState.score,
         level: gameState.level,
       });
-      
+
       queryClient.invalidateQueries({ queryKey: ["/api/scores"] });
-      
+
       toast({
         title: "Game Over!",
         description: `Final Score: ${gameState.score}`,
@@ -112,26 +94,31 @@ export default function Game() {
           maxTime={INITIAL_TIME}
           onTimeUp={handleGameOver}
         />
-        
+
         <Card className="w-full">
           <CardContent className="p-4 space-y-4">
-            <WordDisplay
-              word={gameState.scrambledWord}
-              onLetterClick={handleLetterClick}
-              selectedIndices={selectedIndices}
-            />
-            
-            <div className="flex gap-2 justify-center">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setInput("");
-                  setSelectedIndices([]);
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">Unscramble this word:</p>
+              <h2 className="text-4xl font-bold tracking-wider">{gameState.scrambledWord}</h2>
+            </div>
+
+            <div className="space-y-2">
+              <Input
+                type="text"
+                placeholder="Type your answer"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyUp={(e) => {
+                  if (e.key === "Enter") {
+                    handleSubmit();
+                  }
                 }}
+                className="text-center text-xl"
+              />
+              <Button 
+                onClick={handleSubmit}
+                className="w-full"
               >
-                Clear
-              </Button>
-              <Button onClick={handleSubmit}>
                 Submit
               </Button>
             </div>
@@ -144,7 +131,6 @@ export default function Game() {
             onClick={() => {
               setGameState(initializeGame());
               setInput("");
-              setSelectedIndices([]);
             }}
           >
             Play Again
