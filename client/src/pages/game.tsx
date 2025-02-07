@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Timer } from "@/components/game/timer";
 import { ScoreDisplay } from "@/components/game/score-display";
+import { Leaderboard } from "@/components/game/leaderboard";
+import { Trophy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { initializeGame, checkWord, calculateScore, INITIAL_TIME, type GameState } from "@/lib/game";
@@ -14,6 +16,8 @@ import { apiRequest } from "@/lib/queryClient";
 export default function Game() {
   const [gameState, setGameState] = useState<GameState>(initializeGame());
   const [input, setInput] = useState<string>("");
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [revealedWord, setRevealedWord] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -40,6 +44,7 @@ export default function Game() {
     }));
 
     setInput("");
+    setRevealedWord(null);
   }, [gameState.level]);
 
   const handleSubmit = useCallback(async () => {
@@ -70,13 +75,8 @@ export default function Game() {
   }, [input, gameState, handleNextWord]);
 
   const handleGameOver = useCallback(async () => {
-    // Show the correct answer when time runs out
-    toast({
-      title: "Time's Up!",
-      description: `The word was: ${gameState.currentWord}`,
-      variant: "destructive",
-    });
-
+    // Show the correct word in place
+    setRevealedWord(gameState.currentWord);
     setGameState((prev) => ({ ...prev, isComplete: true }));
 
     try {
@@ -100,6 +100,10 @@ export default function Game() {
     }
   }, [gameState.score, gameState.level, gameState.currentWord, queryClient]);
 
+  if (showLeaderboard) {
+    return <Leaderboard onBack={() => setShowLeaderboard(false)} />;
+  }
+
   return (
     <div className="min-h-screen w-full p-4 relative overflow-hidden">
       {/* Animated background */}
@@ -111,7 +115,18 @@ export default function Game() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <ScoreDisplay score={gameState.score} level={gameState.level} />
+        <div className="flex justify-between items-center">
+          <ScoreDisplay score={gameState.score} level={gameState.level} />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowLeaderboard(true)}
+            className="ml-2"
+          >
+            <Trophy className="h-4 w-4" />
+          </Button>
+        </div>
+
         <Timer
           timeLeft={gameState.timeLeft}
           maxTime={INITIAL_TIME}
@@ -121,9 +136,11 @@ export default function Game() {
         <Card className="w-full backdrop-blur-sm bg-white/90">
           <CardContent className="p-4 space-y-4">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">Unscramble this word:</p>
+              <p className="text-sm text-muted-foreground mb-2">
+                {revealedWord ? "Time's up! The word was:" : "Unscramble this word:"}
+              </p>
               <h2 className="text-4xl font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
-                {gameState.scrambledWord}
+                {revealedWord || gameState.scrambledWord}
               </h2>
             </div>
 
@@ -139,10 +156,12 @@ export default function Game() {
                   }
                 }}
                 className="text-center text-xl"
+                disabled={gameState.isComplete}
               />
               <Button
                 onClick={handleSubmit}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                disabled={gameState.isComplete}
               >
                 Submit
               </Button>
@@ -156,6 +175,7 @@ export default function Game() {
             onClick={() => {
               setGameState(initializeGame());
               setInput("");
+              setRevealedWord(null);
             }}
           >
             Play Again
