@@ -84,14 +84,14 @@ export default function Game() {
     if (!user) {
       toast({
         title: "Game Over!",
-        description: "Log in or create an account to save your score!",
+        description: `Amazing score: ${gameState.score}! Login or create an account to save it on the leaderboard!`,
         action: (
           <Button
             variant="default"
             size="sm"
             onClick={() => setLocation("/auth")}
           >
-            Login / Sign Up
+            Save Score & Login
           </Button>
         ),
       });
@@ -108,7 +108,7 @@ export default function Game() {
 
       toast({
         title: "Game Over!",
-        description: `Final Score: ${gameState.score}`,
+        description: `Final Score: ${gameState.score} - Saved to leaderboard!`,
       });
     } catch (error) {
       toast({
