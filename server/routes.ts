@@ -3,16 +3,22 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertScoreSchema } from "@shared/schema";
 import { setupAuth } from "./auth";
+import rateLimit from "express-rate-limit";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // max 100 requests per windowMs
+  });
 
   app.get("/api/scores", async (_req, res) => {
     const scores = await storage.getTopScores(10);
     res.json(scores);
   });
 
-  app.post("/api/scores", async (req, res) => {
+  app.post("/api/scores", limiter, async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ error: "Must be logged in to save scores" });
     }
