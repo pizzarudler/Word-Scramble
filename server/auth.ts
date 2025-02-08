@@ -1,6 +1,7 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
+import lusca from "lusca";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -45,6 +46,7 @@ export function setupAuth(app: Express) {
   }
 
   app.use(session(sessionSettings));
+  app.use(lusca.csrf());
   app.use(passport.initialize());
   app.use(passport.session());
 
